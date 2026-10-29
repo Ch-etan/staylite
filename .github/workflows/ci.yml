@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# If you push twice quickly, cancel the older run
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: CI only needs to read the repo
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # A throwaway Postgres that lives only during this job
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: staylite
+          POSTGRES_PASSWORD: staylite
+          POSTGRES_DB: staylite
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U staylite"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    # Every "run:" step starts inside backend/
+    defaults:
+      run:
+        working-directory: backend
+
+    # Read by application.yml (the ${DB_URL:...} placeholders)
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/staylite
+      DB_USER: staylite
+      DB_PASSWORD: staylite
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Show tool versions
+        run: |
+          java -version
+          ./mvnw -v
+
+      - name: Build and test
+        run: ./mvnw -B -ntp verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports
+          if-no-files-found: ignore
+
+      - name: Upload built jar
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          if-no-files-found: error
