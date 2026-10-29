@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: staylite-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/staylite}
+    username: ${DB_USER:staylite}
+    password: ${DB_PASSWORD:staylite}
+  jpa:
+    hibernate:
+      ddl-auto: validate      # Flyway owns the schema, Hibernate only checks it
+    open-in-view: false
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
