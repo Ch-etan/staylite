@@ -16,5 +16,19 @@ services:
       timeout: 3s
       retries: 10
 
+  backend:
+    build: ./backend
+    container_name: staylite-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/staylite
+      DB_USER: staylite
+      DB_PASSWORD: staylite
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
