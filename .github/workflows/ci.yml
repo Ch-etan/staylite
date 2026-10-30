@@ -122,3 +122,73 @@ jobs:
             ${{ env.IMAGE }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to EC2
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    # Never run two deploys at once, and never cancel one halfway
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Prepare SSH
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Create .env for this release
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          {
+            echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}"
+            echo "TAG=${GITHUB_SHA}"
+            echo "DB_PASSWORD=${DB_PASSWORD}"
+          } > .env
+
+      - name: Copy compose file and .env to EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" "mkdir -p ~/staylite"
+          scp -i ~/.ssh/deploy_key docker-compose.prod.yml .env "$EC2_USER@$EC2_HOST:~/staylite/"
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" bash -s <<'EOF'
+          set -e
+          cd ~/staylite
+          chmod 600 .env
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d --remove-orphans
+          docker image prune -f
+          EOF
+
+      - name: Health check
+        run: |
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 10 --retry-all-errors \
+            "http://$EC2_HOST/actuator/health"
+          echo
+          curl --fail --silent --show-error "http://$EC2_HOST/api/listings" | head -c 300
+
+      - name: Show server logs if deploy failed
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/deploy_key "$EC2_USER@$EC2_HOST" \
+            "cd ~/staylite && docker compose -f docker-compose.prod.yml ps && docker compose -f docker-compose.prod.yml logs --tail 60"
