@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: staylite
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: staylite
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U staylite"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    # No "ports:" here. The database is NOT reachable from the internet.
+
+  backend:
+    image: ghcr.io/${OWNER}/staylite-backend:${TAG}
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/staylite
+      DB_USER: staylite
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "80:8080"          # public port 80 -> app port 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
