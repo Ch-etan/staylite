@@ -85,13 +85,21 @@ jobs:
           if-no-files-found: error
 
   docker:
-    name: Build and push Docker image
+    name: Build and push ${{ matrix.name }} image
     needs: backend              # only runs if build and tests passed
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write           # needed to push to GHCR
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: backend
+            context: backend
+          - name: frontend
+            context: frontend
 
     steps:
       - name: Check out code
@@ -99,7 +107,7 @@ jobs:
 
       # GHCR image names must be lowercase, and your username has capitals
       - name: Compute image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/staylite-backend" >> "$GITHUB_ENV"
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/staylite-${{ matrix.name }}" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -115,13 +123,13 @@ jobs:
       - name: Build image (push only on main)
         uses: docker/build-push-action@v7
         with:
-          context: backend
+          context: ${{ matrix.context }}
           push: ${{ github.event_name == 'push' }}
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
   deploy:
     name: Deploy to EC2
@@ -181,11 +189,17 @@ jobs:
 
       - name: Health check
         run: |
+          # 1. Backend health, through Nginx
           curl --fail --silent --show-error \
             --retry 12 --retry-delay 10 --retry-all-errors \
             "http://$EC2_HOST/actuator/health"
           echo
-          curl --fail --silent --show-error "http://$EC2_HOST/api/listings" | head -c 300
+          # 2. API data, through Nginx
+          curl --fail --silent --show-error "http://$EC2_HOST/api/listings" | head -c 200
+          echo
+          # 3. The React app itself
+          curl --fail --silent --show-error "http://$EC2_HOST/" | grep -q '<div id="root">'
+          echo "Frontend OK"
 
       - name: Show server logs if deploy failed
         if: failure()
