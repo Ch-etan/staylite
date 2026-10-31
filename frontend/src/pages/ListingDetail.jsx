@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
-import { gradient, money } from '../format'
+import { AMENITY_ICONS, amenityList, categoryLabel, money } from '../format'
 import { useAuth } from '../AuthContext.jsx'
+import Scene from '../Scene.jsx'
 
 const todayLocal = () =>
   new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
@@ -62,16 +63,35 @@ export default function ListingDetail() {
 
   return (
     <div className="detail">
-      <div className="hero" style={{ background: gradient(listing.id) }}>{listing.city}</div>
+      <Link to="/" className="back">← All stays</Link>
+
+      <div className="detail-hero">
+        <Scene category={listing.category} seed={listing.id} />
+        <span className="tag">{categoryLabel(listing.category)}</span>
+      </div>
+
       <div className="detail-grid">
         <div>
           <h1>{listing.title}</h1>
-          <p className="muted">{listing.city} · up to {listing.maxGuests} guests</p>
-          <p>{listing.description}</p>
+          <p className="meta">
+            <span className="rating-inline">★ {Number(listing.rating).toFixed(1)}</span>
+            <span>{listing.city}</span>
+            <span>Up to {listing.maxGuests} guests</span>
+          </p>
+          <p className="description">{listing.description}</p>
+
+          <h3>What this place offers</h3>
+          <div className="amenities">
+            {amenityList(listing.amenities).map((a) => (
+              <div key={a} className="amenity">
+                <span>{AMENITY_ICONS[a] ?? '✔'}</span> {a}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="panel">
-          <p><strong>{money(listing.pricePerNight)}</strong> / night</p>
+        <div className="panel booking">
+          <p className="booking-price"><strong>{money(listing.pricePerNight)}</strong> <span className="muted">/ night</span></p>
           <label>Check-in
             <input type="date" min={todayLocal()} value={checkIn}
                    onChange={(e) => setCheckIn(e.target.value)} />
@@ -86,7 +106,7 @@ export default function ListingDetail() {
           </label>
 
           {nights > 0 && (
-            <p>{nights} night{nights > 1 ? 's' : ''} × {money(listing.pricePerNight)} ={' '}
+            <p className="total">{nights} night{nights > 1 ? 's' : ''} × {money(listing.pricePerNight)} ={' '}
               <strong>{money(nights * listing.pricePerNight)}</strong></p>
           )}
           {available === true && <p className="ok">Available for these dates</p>}

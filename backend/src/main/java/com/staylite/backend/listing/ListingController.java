@@ -23,12 +23,16 @@ public class ListingController {
     // Filtering in Java keeps this simple; fine for a small catalogue
     @GetMapping
     public List<Listing> search(@RequestParam(required = false) String city,
-                                @RequestParam(required = false) Integer guests) {
+                                @RequestParam(required = false) Integer guests,
+                                @RequestParam(required = false) String category,
+                                @RequestParam(required = false) String sort) {
         return repository.findAll().stream()
                 .filter(l -> city == null || city.isBlank()
                         || l.getCity().toLowerCase().contains(city.trim().toLowerCase()))
                 .filter(l -> guests == null || l.getMaxGuests() >= guests)
-                .sorted(Comparator.comparing(Listing::getId))
+                .filter(l -> category == null || category.isBlank()
+                        || l.getCategory().equalsIgnoreCase(category.trim()))
+                .sorted(comparator(sort))
                 .toList();
     }
 
@@ -36,5 +40,17 @@ public class ListingController {
     public Listing one(@PathVariable Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Listing not found"));
+    }
+
+    private static Comparator<Listing> comparator(String sort) {
+        if (sort == null) {
+            return Comparator.comparing(Listing::getId);
+        }
+        return switch (sort) {
+            case "price_asc" -> Comparator.comparing(Listing::getPricePerNight);
+            case "price_desc" -> Comparator.comparing(Listing::getPricePerNight).reversed();
+            case "rating" -> Comparator.comparing(Listing::getRating).reversed();
+            default -> Comparator.comparing(Listing::getId);
+        };
     }
 }

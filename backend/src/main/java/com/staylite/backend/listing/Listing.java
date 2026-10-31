@@ -21,6 +21,10 @@ public class Listing {
     @Column(name = "max_guests")
     private int maxGuests;
 
+    private String category;
+    private BigDecimal rating;
+    private String amenities;
+
     protected Listing() {}   // required by JPA
 
     public Long getId() { return id; }
@@ -29,4 +33,7 @@ public class Listing {
     public String getCity() { return city; }
     public BigDecimal getPricePerNight() { return pricePerNight; }
     public int getMaxGuests() { return maxGuests; }
+    public String getCategory() { return category; }
+    public BigDecimal getRating() { return rating; }
+    public String getAmenities() { return amenities; }
 }
