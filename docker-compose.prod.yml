@@ -21,10 +21,18 @@ services:
       DB_URL: jdbc:postgresql://db:5432/staylite
       DB_USER: staylite
       DB_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "80:8080"          # public port 80 -> app port 8080
     depends_on:
       db:
+        condition: service_healthy
+    restart: unless-stopped
+    # No "ports:" here either. Only Nginx (frontend) can reach it.
+
+  frontend:
+    image: ghcr.io/${OWNER}/staylite-frontend:${TAG}
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
         condition: service_healthy
     restart: unless-stopped
 
