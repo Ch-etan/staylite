@@ -1,6 +1,8 @@
 package com.staylite.backend.common;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -10,5 +12,14 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ProblemDetail handle(ApiException ex) {
         return ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .findFirst()
+                .orElse("Invalid request");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
     }
 }

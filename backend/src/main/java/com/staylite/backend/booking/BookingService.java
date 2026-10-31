@@ -38,12 +38,12 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking create(CreateBookingRequest req) {
+    public Booking create(Long guestId, CreateBookingRequest req) {
         validateDates(req.checkIn(), req.checkOut(), LocalDate.now());
 
         Listing listing = listings.findById(req.listingId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Listing not found"));
-        if (!users.existsById(req.guestId())) {
+        if (!users.existsById(guestId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Guest not found");
         }
         if (req.guests() > listing.getMaxGuests()) {
@@ -58,7 +58,7 @@ public class BookingService {
         BigDecimal total = listing.getPricePerNight().multiply(BigDecimal.valueOf(nights));
 
         try {
-            return bookings.saveAndFlush(new Booking(req.listingId(), req.guestId(),
+            return bookings.saveAndFlush(new Booking(req.listingId(), guestId,
                     req.checkIn(), req.checkOut(), req.guests(), total));
         } catch (DataIntegrityViolationException e) {
             // Two requests raced past the check above; the DB constraint caught it.
@@ -67,8 +67,10 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking cancel(Long bookingId) {
+    public Booking cancel(Long bookingId, Long userId) {
+        // Someone else's booking looks exactly like a missing one (404)
         Booking booking = bookings.findById(bookingId)
+                .filter(b -> b.getGuestId().equals(userId))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
         booking.cancel();
         return booking;

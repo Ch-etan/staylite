@@ -164,11 +164,13 @@ jobs:
       - name: Create .env for this release
         env:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           {
             echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}"
             echo "TAG=${GITHUB_SHA}"
             echo "DB_PASSWORD=${DB_PASSWORD}"
+            echo "JWT_SECRET=${JWT_SECRET}"
           } > .env
 
       - name: Copy compose file and .env to EC2
