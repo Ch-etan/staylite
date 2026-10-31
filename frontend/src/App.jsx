@@ -20,9 +20,9 @@ export default function App() {
   const { user, logout } = useAuth()
 
   return (
-    <>
+    <div className="app">
       <header className="nav">
-        <NavLink to="/" className="brand">StayLite</NavLink>
+        <NavLink to="/" className="brand">🏡 StayLite</NavLink>
         <nav>
           <NavLink to="/" end>Explore</NavLink>
           {user && <NavLink to="/bookings">My bookings</NavLink>}
@@ -35,7 +35,7 @@ export default function App() {
               <button onClick={logout}>Log out</button>
             </>
           ) : (
-            <NavLink to="/login">Log in</NavLink>
+            <NavLink to="/login" className="login-link">Log in</NavLink>
           )}
         </div>
       </header>
@@ -50,6 +50,10 @@ export default function App() {
           <Route path="*" element={<p>Page not found.</p>} />
         </Routes>
       </main>
-    </>
+
+      <footer className="footer">
+        StayLite · A demo project built with Spring Boot, React, Docker and GitHub Actions
+      </footer>
+    </div>
   )
 }
