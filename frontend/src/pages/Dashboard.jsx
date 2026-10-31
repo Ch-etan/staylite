@@ -4,10 +4,10 @@ import {
 } from 'recharts'
 import { api } from '../api'
 import { money } from '../format'
-import { useUser } from '../UserContext.jsx'
+import { useAuth } from '../AuthContext.jsx'
 
 export default function Dashboard() {
-  const { user, userId } = useUser()
+  const { user } = useAuth()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const isHost = user?.role === 'HOST'
@@ -15,17 +15,17 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isHost) return
     Promise.all([
-      api.summary(userId), api.monthly(userId), api.topListings(userId), api.occupancy(userId),
+      api.summary(), api.monthly(), api.topListings(), api.occupancy(),
     ])
       .then(([summary, monthly, top, occupancy]) => {
         setData({ summary, monthly, top, occupancy })
         setError('')
       })
       .catch((e) => setError(e.message))
-  }, [isHost, userId])
+  }, [isHost])
 
   if (!user) return <p className="muted">Loading…</p>
-  if (!isHost) return <p>The dashboard is for hosts. Switch to a host in the top-right menu.</p>
+  if (!isHost) return <p>The dashboard is for hosts. Log in with a host account.</p>
   if (error) return <p className="error">{error}</p>
   if (!data) return <p className="muted">Loading dashboard…</p>
 

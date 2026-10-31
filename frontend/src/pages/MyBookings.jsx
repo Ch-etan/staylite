@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { money } from '../format'
-import { useUser } from '../UserContext.jsx'
+import { useAuth } from '../AuthContext.jsx'
 
 export default function MyBookings() {
-  const { userId, user } = useUser()
+  const { user } = useAuth()
   const [bookings, setBookings] = useState([])
   const [listings, setListings] = useState({})
   const [error, setError] = useState('')
   const [tick, setTick] = useState(0)   // bump to reload the list
 
   useEffect(() => {
-    Promise.all([api.myBookings(userId), api.listings()])
+    Promise.all([api.myBookings(), api.listings()])
       .then(([b, l]) => {
         setBookings(b)
         setListings(Object.fromEntries(l.map((x) => [x.id, x])))
         setError('')
       })
       .catch((e) => setError(e.message))
-  }, [userId, tick])
+  }, [tick])
 
   async function cancel(id) {
     try {

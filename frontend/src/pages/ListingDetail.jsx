@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { gradient, money } from '../format'
-import { useUser } from '../UserContext.jsx'
+import { useAuth } from '../AuthContext.jsx'
 
 const todayLocal = () =>
   new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
@@ -10,7 +10,8 @@ const todayLocal = () =>
 export default function ListingDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { userId, user } = useUser()
+  const location = useLocation()
+  const { user } = useAuth()
 
   const [listing, setListing] = useState(null)
   const [checkIn, setCheckIn] = useState('')
@@ -44,7 +45,6 @@ export default function ListingDetail() {
     try {
       await api.book({
         listingId: Number(id),
-        guestId: userId,
         checkIn,
         checkOut,
         guests: Number(guests),
@@ -93,10 +93,16 @@ export default function ListingDetail() {
           {available === false && <p className="error">Already booked for these dates</p>}
           {message && <p className="error">{message}</p>}
 
-          <button className="primary" onClick={book}
-                  disabled={busy || nights <= 0 || available !== true}>
-            {busy ? 'Booking…' : `Book as ${user?.name ?? '…'}`}
-          </button>
+          {user ? (
+            <button className="primary" onClick={book}
+                    disabled={busy || nights <= 0 || available !== true}>
+              {busy ? 'Booking…' : `Book as ${user.name}`}
+            </button>
+          ) : (
+            <Link className="button primary" to="/login" state={{ from: location.pathname }}>
+              Log in to book
+            </Link>
+          )}
         </div>
       </div>
     </div>

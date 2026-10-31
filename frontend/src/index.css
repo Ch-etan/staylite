@@ -21,7 +21,6 @@ h3 { margin: 0 0 8px; }
 .nav nav { display: flex; gap: 8px; flex: 1; }
 .nav nav a { padding: 6px 12px; border-radius: 8px; color: var(--muted); }
 .nav nav a.active { background: #fdecf2; color: var(--brand); font-weight: 600; }
-.switcher { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
 
 .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
 .muted { color: var(--muted); }
@@ -71,6 +70,20 @@ th { font-size: .8rem; text-transform: uppercase; color: var(--muted); }
 .occ-label { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: 4px; }
 .bar { height: 10px; background: #eceef2; border-radius: 999px; overflow: hidden; }
 .bar > div { height: 100%; background: var(--brand); }
+
+/* ---------- Step 9: login, user badge ---------- */
+.nav .who { display: flex; align-items: center; gap: 12px; font-size: .9rem; }
+.badge.role { background: #e0e7ff; color: #3730a3; margin-left: 4px; }
+
+.button { display: block; text-align: center; padding: 8px 10px; border-radius: 8px; margin-top: 8px; }
+.button.primary { background: var(--brand); color: #fff; }
+
+.auth-card { max-width: 400px; margin: 40px auto; }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tabs button { flex: 1; }
+.tabs button.active { background: #fdecf2; border-color: var(--brand); color: var(--brand); font-weight: 600; }
+.demo-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px;
+            padding-top: 12px; border-top: 1px solid var(--border); font-size: .85rem; }
 
 @media (max-width: 800px) {
   .detail-grid, .charts { grid-template-columns: 1fr; }

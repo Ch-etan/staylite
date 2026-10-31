@@ -21,6 +21,8 @@ services:
       DB_URL: jdbc:postgresql://db:5432/staylite
       DB_USER: staylite
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo1234}
     depends_on:
       db:
         condition: service_healthy

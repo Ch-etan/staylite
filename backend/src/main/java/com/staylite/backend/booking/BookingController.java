@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,18 +21,19 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Booking create(@Valid @RequestBody CreateBookingRequest request) {
-        return service.create(request);
+    public Booking create(@Valid @RequestBody CreateBookingRequest request, Authentication auth) {
+        return service.create(userId(auth), request);
     }
 
     @PostMapping("/{id}/cancel")
-    public Booking cancel(@PathVariable Long id) {
-        return service.cancel(id);
+    public Booking cancel(@PathVariable Long id, Authentication auth) {
+        return service.cancel(id, userId(auth));
     }
 
+    /** Only the caller's own bookings. */
     @GetMapping
-    public List<Booking> byGuest(@RequestParam Long guestId) {
-        return service.forGuest(guestId);
+    public List<Booking> mine(Authentication auth) {
+        return service.forGuest(userId(auth));
     }
 
     @GetMapping("/availability")
@@ -40,5 +42,9 @@ public class BookingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut) {
         return Map.of("available", service.isAvailable(listingId, checkIn, checkOut));
+    }
+
+    private static Long userId(Authentication auth) {
+        return Long.valueOf(auth.getName());   // the token's subject is the user id
     }
 }
