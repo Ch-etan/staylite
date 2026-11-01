@@ -5,6 +5,7 @@ import com.staylite.backend.listing.Listing;
 import com.staylite.backend.listing.ListingRepository;
 import com.staylite.backend.user.UserRepository;
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -15,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BookingService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     private final BookingRepository bookings;
     private final ListingRepository listings;
@@ -37,6 +41,15 @@ public class BookingService {
         }
     }
 
+    /** Simulated payment reference. A real gateway would return its own transaction id. */
+    static String newPaymentReference() {
+        StringBuilder ref = new StringBuilder("PAY-");
+        for (int i = 0; i < 10; i++) {
+            ref.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
+        }
+        return ref.toString();
+    }
+
     @Transactional
     public Booking create(Long guestId, CreateBookingRequest req) {
         validateDates(req.checkIn(), req.checkOut(), LocalDate.now());
@@ -56,10 +69,13 @@ public class BookingService {
 
         long nights = ChronoUnit.DAYS.between(req.checkIn(), req.checkOut());
         BigDecimal total = listing.getPricePerNight().multiply(BigDecimal.valueOf(nights));
+        String requests = req.specialRequests() == null || req.specialRequests().isBlank()
+                ? null : req.specialRequests().trim();
 
         try {
             return bookings.saveAndFlush(new Booking(req.listingId(), guestId,
-                    req.checkIn(), req.checkOut(), req.guests(), total));
+                    req.checkIn(), req.checkOut(), req.guests(), total,
+                    req.phone(), requests, req.paymentMethod().name(), newPaymentReference()));
         } catch (DataIntegrityViolationException e) {
             // Two requests raced past the check above; the DB constraint caught it.
             throw new ApiException(HttpStatus.CONFLICT, "These dates are already booked");
@@ -72,6 +88,10 @@ public class BookingService {
         Booking booking = bookings.findById(bookingId)
                 .filter(b -> b.getGuestId().equals(userId))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (!BookingRules.canCancel(booking.getStatus(), booking.getCheckIn(), LocalDate.now())) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "This booking can no longer be cancelled");
+        }
         booking.cancel();
         return booking;
     }

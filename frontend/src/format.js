@@ -61,3 +61,14 @@ export const whenLabel = (iso) => {
   if (n > 1) return `in ${n} days`
   return `${-n} day${n === -1 ? '' : 's'} ago`
 }
+
+export const STATUS_LABELS = {
+  UPCOMING: 'Upcoming',
+  IN_PROGRESS: 'Staying now',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+}
+export const statusLabel = (s) => STATUS_LABELS[s] ?? s
+
+export const METHOD_LABELS = { UPI: 'UPI', CARD: 'Card', NETBANKING: 'Net banking' }
+export const methodLabel = (m) => METHOD_LABELS[m] ?? m

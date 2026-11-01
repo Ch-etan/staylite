@@ -25,9 +25,10 @@ public class DashboardService {
                                 long bookedNights, int occupancyPercent) {}
 
     public record BookingRow(long id, long listingId, String listingTitle, String city,
-                             String guestName, String guestEmail,
-                             LocalDate checkIn, LocalDate checkOut, int nights,
-                             int guests, BigDecimal totalPrice, String status) {}
+                             String guestName, String guestEmail, String guestPhone,
+                             String specialRequests, LocalDate checkIn, LocalDate checkOut,
+                             int nights, int guests, BigDecimal totalPrice, String status,
+                             String paymentStatus, String paymentMethod) {}
 
     private final JdbcTemplate jdbc;
 
@@ -144,8 +145,14 @@ public class DashboardService {
         String sql = """
                 SELECT b.id, l.id AS listing_id, l.title, l.city,
                        u.name AS guest_name, u.email AS guest_email,
+                       b.guest_phone, b.special_requests,
                        b.check_in, b.check_out, (b.check_out - b.check_in) AS nights,
-                       b.guests, b.total_price, b.status
+                       b.guests, b.total_price,
+                       CASE WHEN b.status = 'CANCELLED' THEN 'CANCELLED'
+                            WHEN b.check_out <= CURRENT_DATE THEN 'COMPLETED'
+                            WHEN b.check_in < CURRENT_DATE THEN 'IN_PROGRESS'
+                            ELSE 'UPCOMING' END AS phase,
+                       b.payment_status, b.payment_method
                 FROM bookings b
                 JOIN listings l ON l.id = b.listing_id
                 JOIN users u ON u.id = b.guest_id
@@ -157,10 +164,12 @@ public class DashboardService {
                         rs.getLong("id"), rs.getLong("listing_id"),
                         rs.getString("title"), rs.getString("city"),
                         rs.getString("guest_name"), rs.getString("guest_email"),
+                        rs.getString("guest_phone"), rs.getString("special_requests"),
                         rs.getObject("check_in", LocalDate.class),
                         rs.getObject("check_out", LocalDate.class),
                         rs.getInt("nights"), rs.getInt("guests"),
-                        rs.getBigDecimal("total_price"), rs.getString("status")),
+                        rs.getBigDecimal("total_price"), rs.getString("phase"),
+                        rs.getString("payment_status"), rs.getString("payment_method")),
                 hostId);
     }
 }

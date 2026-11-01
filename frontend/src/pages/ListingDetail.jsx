@@ -4,6 +4,7 @@ import { api } from '../api'
 import { AMENITY_ICONS, amenityList, categoryLabel, money } from '../format'
 import { useAuth } from '../AuthContext.jsx'
 import Scene from '../Scene.jsx'
+import Checkout from '../Checkout.jsx'
 
 const todayLocal = () =>
   new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
@@ -20,7 +21,7 @@ export default function ListingDetail() {
   const [guests, setGuests] = useState(1)
   const [available, setAvailable] = useState(null)
   const [message, setMessage] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [showCheckout, setShowCheckout] = useState(false)
 
   const nights = checkIn && checkOut
     ? Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000)
@@ -39,25 +40,6 @@ export default function ListingDetail() {
       .then((r) => setAvailable(r.available))
       .catch((e) => setMessage(e.message))
   }, [id, checkIn, checkOut, nights])
-
-  async function book() {
-    setBusy(true)
-    setMessage('')
-    try {
-      await api.book({
-        listingId: Number(id),
-        checkIn,
-        checkOut,
-        guests: Number(guests),
-      })
-      navigate('/bookings')
-    } catch (e) {
-      setMessage(e.message)
-      setAvailable(null)
-    } finally {
-      setBusy(false)
-    }
-  }
 
   if (!listing) return <p className="muted">{message || 'Loading…'}</p>
 
@@ -114,17 +96,27 @@ export default function ListingDetail() {
           {message && <p className="error">{message}</p>}
 
           {user ? (
-            <button className="primary" onClick={book}
-                    disabled={busy || nights <= 0 || available !== true}>
-              {busy ? 'Booking…' : `Book as ${user.name}`}
+            <button className="primary" onClick={() => setShowCheckout(true)}
+                    disabled={nights <= 0 || available !== true || Number(guests) < 1}>
+              Continue to payment
             </button>
           ) : (
             <Link className="button primary" to="/login" state={{ from: location.pathname }}>
               Log in to book
             </Link>
           )}
+          <p className="muted small">Payment is taken in advance. Free cancellation until the day before check-in.</p>
         </div>
       </div>
+
+      {showCheckout && (
+        <Checkout
+          listing={listing} checkIn={checkIn} checkOut={checkOut}
+          guests={guests} nights={nights}
+          onClose={() => setShowCheckout(false)}
+          onPaid={(booking) => navigate('/bookings', { state: { booking } })}
+        />
+      )}
     </div>
   )
 }

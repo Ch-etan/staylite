@@ -36,19 +36,47 @@ public class Booking {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "guest_phone")
+    private String guestPhone;
+
+    @Column(name = "special_requests")
+    private String specialRequests;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
+    @Column(name = "payment_status")
+    private String paymentStatus = "PAID";
+
+    @Column(name = "payment_ref")
+    private String paymentRef;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     protected Booking() {}
 
-    public Booking(Long listingId, Long guestId, LocalDate checkIn,
-                   LocalDate checkOut, int guests, BigDecimal totalPrice) {
+    public Booking(Long listingId, Long guestId, LocalDate checkIn, LocalDate checkOut,
+                   int guests, BigDecimal totalPrice, String guestPhone, String specialRequests,
+                   String paymentMethod, String paymentRef) {
         this.listingId = listingId;
         this.guestId = guestId;
         this.checkIn = checkIn;
         this.checkOut = checkOut;
         this.guests = guests;
         this.totalPrice = totalPrice;
+        this.guestPhone = guestPhone;
+        this.specialRequests = specialRequests;
+        this.paymentMethod = paymentMethod;
+        this.paymentRef = paymentRef;
+        this.paidAt = LocalDateTime.now();
     }
 
-    public void cancel() { this.status = BookingStatus.CANCELLED; }
+    /** Cancelling a future booking refunds the payment. */
+    public void cancel() {
+        this.status = BookingStatus.CANCELLED;
+        this.paymentStatus = "REFUNDED";
+    }
 
     public Long getId() { return id; }
     public Long getListingId() { return listingId; }
@@ -59,4 +87,10 @@ public class Booking {
     public BigDecimal getTotalPrice() { return totalPrice; }
     public BookingStatus getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getGuestPhone() { return guestPhone; }
+    public String getSpecialRequests() { return specialRequests; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public String getPaymentStatus() { return paymentStatus; }
+    public String getPaymentRef() { return paymentRef; }
+    public LocalDateTime getPaidAt() { return paidAt; }
 }
