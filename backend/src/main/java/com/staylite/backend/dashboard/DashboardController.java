@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,6 +35,13 @@ public class DashboardController {
     @GetMapping("/occupancy")
     public List<DashboardService.OccupancyStat> occupancy(Authentication auth) {
         return service.occupancy(hostId(auth));
+    }
+
+    /** when = upcoming | current | past | cancelled | all */
+    @GetMapping("/bookings")
+    public List<DashboardService.BookingRow> bookings(
+            @RequestParam(defaultValue = "upcoming") String when, Authentication auth) {
+        return service.bookings(hostId(auth), when);
     }
 
     private static long hostId(Authentication auth) {

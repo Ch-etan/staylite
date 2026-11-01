@@ -148,6 +148,28 @@ th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color:
                       font-weight: 600; }
 .demo-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px;
             padding-top: 12px; border-top: 1px solid var(--border); font-size: .85rem; }
+/* ---------- host dashboard: guest bookings ---------- */
+.stat.clickable { text-align: left; cursor: pointer; font: inherit; color: inherit;
+                  border: 1px solid var(--border); background: var(--card);
+                  transition: transform .15s, box-shadow .15s; }
+.stat.clickable:hover { transform: translateY(-2px); box-shadow: var(--shadow);
+                        border-color: #f2a3bb; }
+.stat.clickable em { display: block; font-style: normal; font-size: .78rem;
+                     color: var(--brand); margin-top: 2px; }
+
+.bookings-panel { margin-bottom: 20px; scroll-margin-top: 90px; }
+.section-head { display: flex; justify-content: space-between; align-items: center;
+                gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.section-head h3 { margin: 0; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button { border-radius: 999px; padding: 6px 14px; font-size: .88rem; }
+.seg button.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+.table-wrap { overflow-x: auto; }
+.table-wrap table { min-width: 720px; }
+.small { font-size: .8rem; }
+.hint { color: var(--brand); font-weight: 600; }
+td a:hover { text-decoration: underline; }
 
 @media (max-width: 860px) {
   .detail-grid, .charts { grid-template-columns: 1fr; }
