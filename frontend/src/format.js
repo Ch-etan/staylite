@@ -40,3 +40,24 @@ export const AMENITY_ICONS = {
   'Pool': '🏊',
   'Sea view': '🌊',
 }
+// "12 Dec 2026"
+export const fmtDate = (iso) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  })
+
+const daysUntil = (iso) => {
+  const d = new Date(`${iso}T00:00:00`)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.round((d - today) / 86400000)
+}
+
+// "Today", "Tomorrow", "in 5 days", "3 days ago"
+export const whenLabel = (iso) => {
+  const n = daysUntil(iso)
+  if (n === 0) return 'Today'
+  if (n === 1) return 'Tomorrow'
+  if (n > 1) return `in ${n} days`
+  return `${-n} day${n === -1 ? '' : 's'} ago`
+}

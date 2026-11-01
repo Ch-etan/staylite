@@ -54,4 +54,5 @@ export const api = {
   monthly: () => authed('/api/dashboard/monthly'),
   topListings: () => authed('/api/dashboard/top-listings'),
   occupancy: () => authed('/api/dashboard/occupancy'),
+  hostBookings: (when) => authed(`/api/dashboard/bookings?when=${encodeURIComponent(when)}`),
 }

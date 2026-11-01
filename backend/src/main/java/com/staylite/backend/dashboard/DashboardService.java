@@ -1,7 +1,10 @@
 package com.staylite.backend.dashboard;
 
+import com.staylite.backend.common.ApiException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,11 @@ public class DashboardService {
     public record OccupancyStat(long listingId, String title,
                                 long bookedNights, int occupancyPercent) {}
 
+    public record BookingRow(long id, long listingId, String listingTitle, String city,
+                             String guestName, String guestEmail,
+                             LocalDate checkIn, LocalDate checkOut, int nights,
+                             int guests, BigDecimal totalPrice, String status) {}
+
     private final JdbcTemplate jdbc;
 
     public DashboardService(JdbcTemplate jdbc) {
@@ -33,6 +41,25 @@ public class DashboardService {
             return 0;
         }
         return (int) Math.min(100, Math.round(bookedNights * 100.0 / windowDays));
+    }
+
+    /**
+     * Maps a tab name to a fixed SQL fragment. The text comes from this switch only,
+     * never from the request, so there is no SQL injection risk.
+     * Every confirmed booking falls in exactly one of upcoming / current / past.
+     */
+    static String filterClause(String when) {
+        return switch (when) {
+            case "upcoming" -> "AND b.status = 'CONFIRMED' AND b.check_in >= CURRENT_DATE "
+                    + "ORDER BY b.check_in ASC, b.id";
+            case "current" -> "AND b.status = 'CONFIRMED' AND b.check_in < CURRENT_DATE "
+                    + "AND b.check_out > CURRENT_DATE ORDER BY b.check_out ASC, b.id";
+            case "past" -> "AND b.status = 'CONFIRMED' AND b.check_out <= CURRENT_DATE "
+                    + "ORDER BY b.check_in DESC, b.id";
+            case "cancelled" -> "AND b.status = 'CANCELLED' ORDER BY b.check_in DESC, b.id";
+            case "all" -> "ORDER BY b.check_in DESC, b.id";
+            default -> throw new ApiException(HttpStatus.BAD_REQUEST, "Unknown filter: " + when);
+        };
     }
 
     public Summary summary(long hostId) {
@@ -109,6 +136,31 @@ public class DashboardService {
                     return new OccupancyStat(rs.getLong("id"), rs.getString("title"), nights,
                             occupancyPercent(nights, WINDOW_DAYS));
                 },
+                hostId);
+    }
+
+    /** Who is staying where, and when, for this host's listings only. */
+    public List<BookingRow> bookings(long hostId, String when) {
+        String sql = """
+                SELECT b.id, l.id AS listing_id, l.title, l.city,
+                       u.name AS guest_name, u.email AS guest_email,
+                       b.check_in, b.check_out, (b.check_out - b.check_in) AS nights,
+                       b.guests, b.total_price, b.status
+                FROM bookings b
+                JOIN listings l ON l.id = b.listing_id
+                JOIN users u ON u.id = b.guest_id
+                WHERE l.host_id = ?
+                """ + filterClause(when) + " LIMIT 200";
+
+        return jdbc.query(sql,
+                (rs, i) -> new BookingRow(
+                        rs.getLong("id"), rs.getLong("listing_id"),
+                        rs.getString("title"), rs.getString("city"),
+                        rs.getString("guest_name"), rs.getString("guest_email"),
+                        rs.getObject("check_in", LocalDate.class),
+                        rs.getObject("check_out", LocalDate.class),
+                        rs.getInt("nights"), rs.getInt("guests"),
+                        rs.getBigDecimal("total_price"), rs.getString("status")),
                 hostId);
     }
 }
