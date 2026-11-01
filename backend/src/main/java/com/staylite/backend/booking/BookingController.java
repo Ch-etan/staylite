@@ -21,19 +21,20 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Booking create(@Valid @RequestBody CreateBookingRequest request, Authentication auth) {
-        return service.create(userId(auth), request);
+    public BookingView create(@Valid @RequestBody CreateBookingRequest request, Authentication auth) {
+        return BookingView.of(service.create(userId(auth), request), LocalDate.now());
     }
 
     @PostMapping("/{id}/cancel")
-    public Booking cancel(@PathVariable Long id, Authentication auth) {
-        return service.cancel(id, userId(auth));
+    public BookingView cancel(@PathVariable Long id, Authentication auth) {
+        return BookingView.of(service.cancel(id, userId(auth)), LocalDate.now());
     }
 
     /** Only the caller's own bookings. */
     @GetMapping
-    public List<Booking> mine(Authentication auth) {
-        return service.forGuest(userId(auth));
+    public List<BookingView> mine(Authentication auth) {
+        LocalDate today = LocalDate.now();
+        return service.forGuest(userId(auth)).stream().map(b -> BookingView.of(b, today)).toList();
     }
 
     @GetMapping("/availability")

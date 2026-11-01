@@ -3,7 +3,7 @@ import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { api } from '../api'
-import { fmtDate, money, whenLabel } from '../format'
+import { fmtDate, methodLabel, money, statusLabel, whenLabel } from '../format'
 import { useAuth } from '../AuthContext.jsx'
 
 const TABS = [
@@ -114,7 +114,7 @@ export default function Dashboard() {
                 <thead>
                   <tr>
                     <th>Guest</th><th>Staying at</th><th>Check-in</th><th>Check-out</th>
-                    <th>Nights</th><th>Guests</th><th>Total</th><th>Status</th>
+                    <th>Nights</th><th>Guests</th><th>Total</th><th>Payment</th><th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -123,6 +123,8 @@ export default function Dashboard() {
                       <td>
                         <strong>{r.guestName}</strong>
                         <div className="small"><a href={`mailto:${r.guestEmail}`}>{r.guestEmail}</a></div>
+                        {r.guestPhone && <div className="small">{r.guestPhone}</div>}
+                        {r.specialRequests && <div className="small hint">“{r.specialRequests}”</div>}
                       </td>
                       <td>
                         <strong>{r.listingTitle}</strong>
@@ -139,7 +141,8 @@ export default function Dashboard() {
                       <td>{r.nights}</td>
                       <td>{r.guests}</td>
                       <td>{money(r.totalPrice)}</td>
-                      <td><span className={`badge ${r.status.toLowerCase()}`}>{r.status}</span></td>
+                      <td>{r.paymentStatus === 'REFUNDED' ? 'Refunded' : `Paid · ${methodLabel(r.paymentMethod)}`}</td>
+                      <td><span className={`badge ${r.status.toLowerCase()}`}>{statusLabel(r.status)}</span></td>
                     </tr>
                   ))}
                 </tbody>
