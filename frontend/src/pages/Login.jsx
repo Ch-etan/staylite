@@ -68,7 +68,7 @@ export default function Login() {
 
       <div className="demo-row">
         <span className="muted">Demo accounts:</span>
-        <button type="button" onClick={() => fillDemo('asha@staylite.com')}>Host (Asha)</button>
+        <button type="button" onClick={() => fillDemo('chetan@staylite.com')}>Host (Chetan)</button>
         <button type="button" onClick={() => fillDemo('ravi@staylite.com')}>Guest (Ravi)</button>
       </div>
     </div>
