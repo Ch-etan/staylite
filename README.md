@@ -8,7 +8,7 @@ A booking platform inspired by home-rental marketplaces. Guests search listings 
 
 | Role | Email | Password |
 |---|---|---|
-| Host | asha@staylite.com | demo1234 |
+| Host | chetan@staylite.com | demo1234 |
 | Guest | ravi@staylite.com | demo1234 |
 
 Demo data only. Anyone can also sign up as a guest.
