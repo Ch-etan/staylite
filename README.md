@@ -157,7 +157,7 @@ Java 25, Spring Boot 4, Spring Security (JWT), Flyway, PostgreSQL 16, React (Vit
 - A single EC2 server, so there is no high availability
 - Hosts cannot yet add or edit listings from the UI
 
-## Screenshots
+## Screenshot
 
 ![Listings](docs/screenshots/listings.png)
 ![Checkout](docs/screenshots/checkout.png)
