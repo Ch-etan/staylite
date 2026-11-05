@@ -10,7 +10,7 @@ COPY . .
 RUN npm run build
 
 # ---------- Stage 2: tiny Nginx image ----------
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 
 LABEL org.opencontainers.image.source="https://github.com/Ch-etan/staylite"
 
