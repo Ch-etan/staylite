@@ -1,5 +1,6 @@
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext.jsx'
+import { useTheme } from './theme'
 import Listings from './pages/Listings.jsx'
 import ListingDetail from './pages/ListingDetail.jsx'
 import MyBookings from './pages/MyBookings.jsx'
@@ -18,6 +19,7 @@ function RequireAuth({ role, children }) {
 
 export default function App() {
   const { user, logout } = useAuth()
+  const { theme, toggle } = useTheme()
 
   return (
     <div className="app">
@@ -29,6 +31,11 @@ export default function App() {
           {user?.role === 'HOST' && <NavLink to="/dashboard">Dashboard</NavLink>}
         </nav>
         <div className="who">
+          <button type="button" className="theme-toggle" onClick={toggle}
+                  aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+                  title={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           {user ? (
             <>
               <span>{user.name} <span className="badge role">{user.role}</span></span>
